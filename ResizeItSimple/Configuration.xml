@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Configuration>
+
+	<Resize KeepAspectRatio="True" Ratio="0.25" FixedWidth="1024" FixedHeight="768" />
+
+	<!-- True if metadata should be copied from source to target. False otherwise. -->
+	<CopyMetadata>True</CopyMetadata>
+
+	<!-- True if, when processing a folder, should look for files inside subdirectories. False otherwise. -->
+	<RecursiveDirectorySearch>False</RecursiveDirectorySearch>
+	
+	<ImageCodec MimeType="image/jpeg">
+		<ColorDepth>24</ColorDepth>
+		<Quality>95</Quality>
+	</ImageCodec>
+
+	<!-- Sets the maximum number of concurrent tasks. Can be -1 or any positive number.	-->
+	<MaxDegreeOfParallelism>-1</MaxDegreeOfParallelism>
+	
+	<!--
+	
+	Specifies the compositing quality for image transformations.
+	
+		AssumeLinear: Assume linear values.
+		Default: Default quality.
+		GammaCorrected: Gamma correction is used.
+		HighQuality: High quality, low speed compositing.
+		HighSpeed: High speed, low quality.
+		Invalid: Invalid quality.
+	
+	-->
+	<CompositingQuality>HighQuality</CompositingQuality>
+
+	<!--
+	
+	Specifies the Pixel Offset Mode for image transformations.
+	
+		Bicubic: Specifies bicubic interpolation. No prefiltering is done. This mode is not suitable for shrinking an image below 25 percent of its original size.
+		Bilinear: Specifies bilinear interpolation. No prefiltering is done. This mode is not suitable for shrinking an image below 50 percent of its original size.
+		Default: Specifies default mode.
+		High: Specifies high quality interpolation.
+		HighQualityBicubic: Specifies high-quality, bicubic interpolation. Prefiltering is performed to ensure high-quality shrinking. This mode produces the highest quality transformed images.
+		HighQualityBilinear: Specifies high-quality, bilinear interpolation. Prefiltering is performed to ensure high-quality shrinking.
+		Invalid: Equivalent to the Invalid element of the QualityMode enumeration.
+		Low: Specifies low quality interpolation.
+		NearestNeighbor: Specifies nearest-neighbor interpolation.
+	
+	-->
+	<InterpolationMode>HighQualityBicubic</InterpolationMode>
+
+	<!--
+
+	Specifies the Pixel Offset Mode for image transformations.
+
+		Default: Specifies the default mode.
+		Half: Specifies that pixels are offset by -.5 units, both horizontally and vertically, for high speed antialiasing.
+		HighQuality: Specifies high quality, low speed rendering.
+		HighSpeed: Specifies high speed, low quality rendering.
+		Invalid: Specifies an invalid mode.
+		None: Specifies no pixel offset.
+	
+	-->
+	<PixelOffsetMode>HighQuality</PixelOffsetMode>
+	
+	<!--
+	
+	Specifies the smoothing mode for image transformations.
+	
+		AntiAlias: Specifies antialiased rendering.
+		Default: Specifies no antialiasing.
+		HighQuality: Specifies antialiased rendering.
+		HighSpeed: Specifies no antialiasing.
+		Invalid: Specifies an invalid mode.
+		None: Specifies no antialiasing.
+	
+	-->
+	<SmoothingMode>HighQuality</SmoothingMode>
+	
+</Configuration>

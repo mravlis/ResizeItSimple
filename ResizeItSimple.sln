@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33927.289
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResizeItSimple", "ResizeItSimple\ResizeItSimple.csproj", "{A453BB17-D28A-4D22-AFB5-7D9234880182}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A453BB17-D28A-4D22-AFB5-7D9234880182}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A453BB17-D28A-4D22-AFB5-7D9234880182}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A453BB17-D28A-4D22-AFB5-7D9234880182}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A453BB17-D28A-4D22-AFB5-7D9234880182}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CBE63551-8B39-459F-B2E0-1098C4BBF951}
+	EndGlobalSection
+EndGlobal

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Threading.Tasks;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace ResizeItSimple
 {
@@ -23,6 +23,16 @@ namespace ResizeItSimple
 		/// </summary>
 		private static Configuration _configuration;
 
+		/// <summary>
+		/// Supported graphics file extensions.
+		/// </summary>
+		private static List<string> _supportedExtensions;
+
+		/// <summary>
+		/// Entry point.
+		/// </summary>
+		/// <param name="args">The list of arguments.</param>
+		/// <returns>0 if execution was successfull, a value different than zero if an error occurs.</returns>
 		static int Main(string[] args)
 		{
 
@@ -35,6 +45,9 @@ namespace ResizeItSimple
 
 				// Reads configuration from the default configuration file name.
 				_configuration = new Configuration(ConfigurationFileName);
+
+				// Gets the configured, supported file extensions.
+				_supportedExtensions = new List<string>(_configuration.SupportedExtensions);
 
 				// Create new list of files to be processed
 				List<FileInfo> fileList = new List<FileInfo>();
@@ -99,15 +112,51 @@ namespace ResizeItSimple
 			if (fileInfo == null)
 				throw new ArgumentNullException(nameof(fileInfo));
 
+			string targetDirectory;
+
 			// Computes the target directory name
-			string targetDirectory = Path.Combine(fileInfo.Directory.FullName, "Resized");
+			if (string.IsNullOrWhiteSpace(_configuration.OutputFolderName))
+				targetDirectory = fileInfo.Directory.FullName;
+			else
+				targetDirectory = Path.Combine(fileInfo.Directory.FullName, _configuration.OutputFolderName);
 
 			// Check if the target directory exists
 			if (!Directory.Exists(targetDirectory))
 				Directory.CreateDirectory(targetDirectory);
 
-			// Keeps the original file name
-			return Path.Combine(targetDirectory, fileInfo.Name);
+			// Get just the file name
+			string justFileName = Path.GetFileNameWithoutExtension(fileInfo.FullName);
+
+			string newExtension;
+
+			// Choose output extension
+			if (_configuration.ImageCodec == null)
+				newExtension = fileInfo.Extension;
+			else
+				newExtension = _configuration.OutputExtension;
+
+			// Builds full file name
+			return Path.Combine(targetDirectory, $"{justFileName}{_configuration.OutputFileSuffix}{newExtension}");
+
+		}
+
+		/// <summary>
+		/// Checks if the file extension is a supported graphics file.
+		/// </summary>
+		/// <param name="fileInfo">A FileInfo object.</param>
+		/// <returns>True if the file extension is supported, false otherwise.</returns>
+		private static bool IsFileSupported(FileInfo fileInfo)
+		{
+
+			// Parameter check
+			if (fileInfo == null)
+				throw new ArgumentNullException(nameof(fileInfo));
+
+			// Get file extension without leading period
+			string fileExtension = fileInfo.Extension.Remove(0, 1).ToLower();
+
+			// Check if file extension is supported
+			return _supportedExtensions.Contains(fileExtension);			
 
 		}
 
@@ -127,7 +176,7 @@ namespace ResizeItSimple
 			// Get full path of the source image
 			string sourceImagePath = sourceImageFile.FullName;
 
-			/// Check if source image file exists
+			// Check if source image file exists
 			if (!sourceImageFile.Exists)
 				throw new FileNotFoundException(@"Could not find the specified file.", sourceImagePath);
 
@@ -137,6 +186,17 @@ namespace ResizeItSimple
 
 			try
 			{
+
+				// Gets target file path
+				string resizedImagePath = GetTargetPath(sourceImageFile);
+
+				// Check if we should skip files that already exist
+				if (_configuration.SkipIfOutputAlreadyExists && File.Exists(resizedImagePath))
+					return;
+
+				// If source file is not supported, do nothing.
+				if (!IsFileSupported(sourceImageFile))
+					return;
 
 				// Opens the source image
 				sourceImage = new Bitmap(sourceImagePath);
@@ -182,15 +242,12 @@ namespace ResizeItSimple
 					foreach (var propertyItem in sourceImage.PropertyItems)
 						resizedImage.SetPropertyItem(propertyItem);
 
-				// Gets target file path
-				string resizedImagePath = GetTargetPath(sourceImageFile);
-
 				// Check if a target image codec was specified
 				if (_configuration.ImageCodec == null)
 					resizedImage.Save(resizedImagePath, sourceImage.RawFormat);
 				else
 					resizedImage.Save(resizedImagePath, _configuration.ImageCodec, _configuration.EncoderParameters);
-				
+
 			}
 			finally
 			{

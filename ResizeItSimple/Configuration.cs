@@ -25,6 +25,11 @@ namespace ResizeItSimple
 		private static readonly Dictionary<string, ImageCodecInfo> EncoderDictionary = new Dictionary<string, ImageCodecInfo>();
 
 		/// <summary>
+		/// Static list of supported graphics file extensions.
+		/// </summary>
+		private static readonly List<string> SupportedFileExtensions = new List<string>();
+
+		/// <summary>
 		/// Boolean indicating whether to keep the source aspect ratio when resizing.
 		/// </summary>
 		private readonly bool _keepAspectRatio = true;
@@ -45,6 +50,21 @@ namespace ResizeItSimple
 		private readonly int _fixedHeight = 768;
 
 		/// <summary>
+		/// The output folder name.
+		/// </summary>
+		private readonly string _outputFolderName = @"Resized";
+
+		/// <summary>
+		/// The output file name pattern.
+		/// </summary>
+		private readonly string _outputFileSuffix = @"{0} (Resized)";
+
+		/// <summary>
+		/// Boolean indicating whether the output should be skipped if output file already exists.
+		/// </summary>
+		private readonly bool _skipIfOutputAlreadyExists = false;
+
+		/// <summary>
 		/// Boolean indicating whether to copy metadata from source image.
 		/// </summary>
 		private readonly bool _copyMetadata = true;
@@ -63,6 +83,11 @@ namespace ResizeItSimple
 		/// The image codec used to save resized files.
 		/// </summary>
 		private readonly ImageCodecInfo _imageCodecInfo = null;
+
+		/// <summary>
+		/// The output extension, defined by the chosen codec.
+		/// </summary>
+		private readonly string _outputExtension = string.Empty;
 
 		/// <summary>
 		/// The encoder parameters to be used when a specific coded is specified.
@@ -98,20 +123,39 @@ namespace ResizeItSimple
 			// Get list of all known encoders
 			ImageCodecInfo[] encoders = ImageCodecInfo.GetImageEncoders();
 
-			// Populates the dictionary of known encoders
+			// Enlist mime types and file extensions
 			foreach (ImageCodecInfo codecInfo in encoders)
+			{
+
+				// Add encoder to dictionary
 				EncoderDictionary.Add(codecInfo.MimeType, codecInfo);
 
+				// Add supported file extensions
+				SupportedFileExtensions.AddRange(codecInfo.FilenameExtension.ToLower().Replace(@"*.", string.Empty).Split(';'));
+
+			}
+
+		}
+
+		/// <summary>
+		/// Creates a new instance of the Configuration class using default configuration parameters.
+		/// </summary>
+		public Configuration()
+		{
 		}
 
 		/// <summary>
 		/// Creates a new instance of the Configuration class.
 		/// </summary>
 		/// <param name="configurationFileName">The configuration file name.</param>
-		public Configuration(string configurationFileName)
+		public Configuration(string configurationFileName) : this()
 		{
 
 			XmlDocument configDocument;
+
+			// File does not exist. Continue with default parameters.
+			if (!System.IO.File.Exists(configurationFileName))
+				return;
 
 			try
 			{
@@ -138,7 +182,7 @@ namespace ResizeItSimple
 			{
 
 				// Check if node exists and if it has been assigned value
-				if ((configNode != null) && !string.IsNullOrEmpty(configNode.InnerText))
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
 					_copyMetadata = bool.Parse(configNode.InnerText);
 
 			}
@@ -158,31 +202,70 @@ namespace ResizeItSimple
 					XmlAttribute attribute = configNode.Attributes["KeepAspectRatio"];
 
 					// Check if atribute exists and if it has been assigned value
-					if ((attribute != null) && !string.IsNullOrEmpty(attribute.Value))
+					if ((attribute != null) && !string.IsNullOrWhiteSpace(attribute.Value))
 						_keepAspectRatio = bool.Parse(attribute.Value);
 
 					// Get Ratio attribute
 					attribute = configNode.Attributes["Ratio"];
 
 					// Check if atribute exists and if it has been assigned value
-					if ((attribute != null) && !string.IsNullOrEmpty(attribute.Value))
+					if ((attribute != null) && !string.IsNullOrWhiteSpace(attribute.Value))
 						_ratio = float.Parse(attribute.Value);
 
 					// Get FixedWidth attribute
 					attribute = configNode.Attributes["FixedWidth"];
 
 					// Check if atribute exists and if it has been assigned value
-					if ((attribute != null) && !string.IsNullOrEmpty(attribute.Value))
+					if ((attribute != null) && !string.IsNullOrWhiteSpace(attribute.Value))
 						_fixedWidth = int.Parse(attribute.Value);
 
 					// Get FixedHeight attribute
 					attribute = configNode.Attributes["FixedHeight"];
 
 					// Check if atribute exists and if it has been assigned value
-					if ((attribute != null) && !string.IsNullOrEmpty(attribute.Value))
+					if ((attribute != null) && !string.IsNullOrWhiteSpace(attribute.Value))
 						_fixedHeight = int.Parse(attribute.Value);
 
 				}
+
+			}
+			catch { }
+
+			// Get OutputFolderName configuration node
+			configNode = configDocument.SelectSingleNode(@"/Configuration/OutputFolderName");
+
+			try
+			{
+
+				// Check if node exists and if it has been assigned value
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
+					_outputFolderName = configNode.InnerText;
+
+			}
+			catch { }
+
+			// Get OutputFileSuffix configuration node
+			configNode = configDocument.SelectSingleNode(@"/Configuration/OutputFileSuffix");
+
+			try
+			{
+
+				// Check if node exists and if it has been assigned value
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
+					_outputFileSuffix = configNode.InnerText;
+
+			}
+			catch { }
+
+			// Get SkipIfOutputAlreadyExists configuration node
+			configNode = configDocument.SelectSingleNode(@"/Configuration/SkipIfOutputAlreadyExists");
+
+			try
+			{
+
+				// Check if node exists and if it has been assigned value
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
+					_skipIfOutputAlreadyExists = bool.Parse(configNode.InnerText);
 
 			}
 			catch { }
@@ -194,7 +277,7 @@ namespace ResizeItSimple
 			{
 
 				// Check if node exists and if it has been assigned value
-				if ((configNode != null) && !string.IsNullOrEmpty(configNode.InnerText))
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
 					_maxDegreeOfParallelism = int.Parse(configNode.InnerText);
 
 			}
@@ -207,7 +290,7 @@ namespace ResizeItSimple
 			{
 
 				// Check if node exists and if it has been assigned value
-				if ((configNode != null) && !string.IsNullOrEmpty(configNode.InnerText))
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
 					_recursiveDirectorySearch = bool.Parse(configNode.InnerText);
 
 			}
@@ -227,18 +310,42 @@ namespace ResizeItSimple
 					XmlAttribute mimeTypeAttribute = configNode.Attributes["MimeType"];
 
 					// Check if atribute exists and if it has been assigned value
-					if ((mimeTypeAttribute != null) && !string.IsNullOrEmpty(mimeTypeAttribute.Value))
+					if ((mimeTypeAttribute != null) && !string.IsNullOrWhiteSpace(mimeTypeAttribute.Value))
+					{
+
+						// If key is not found, an exception is thrown and this property is not configured
 						_imageCodecInfo = EncoderDictionary[mimeTypeAttribute.Value];
 
-					// Get parameter count for efficiency
-					int parameterCount = configNode.ChildNodes.Count;
+						// Get first extension to be used by the output
+						_outputExtension = _imageCodecInfo.FilenameExtension.Replace("*", string.Empty).ToLower().Split(';')[0];
+
+					}
+						
+					// Temporary list of encoder parameters
+					List<EncoderParameter> parameterList = new List<EncoderParameter>();
+
+					// Check all child XML nodes for parameters
+					foreach (XmlNode parameterNode in configNode.ChildNodes)
+					{
+
+						// Get encoder parameter from this XML node (can return nulls)
+						EncoderParameter parameter = GetEncoderParameter(parameterNode);
+
+						// Don't add parameter if it is null
+						if (parameter != null)
+							parameterList.Add(parameter);
+
+					}
+
+					// Get final parameter count
+					int totalParametersFound = parameterList.Count;
 
 					// Create new parameter collection
-					_encoderParameters = new EncoderParameters(parameterCount);
+					_encoderParameters = new EncoderParameters(totalParametersFound);
 
 					// Get encoder parameter for each child parameter node
-					for (int parameterIndex = 0; parameterIndex < parameterCount; parameterIndex++)
-						_encoderParameters.Param[parameterIndex] = GetEncoderParameter(configNode.ChildNodes[parameterIndex]);
+					for (int parameterIndex = 0; parameterIndex < totalParametersFound; parameterIndex++)
+						_encoderParameters.Param[parameterIndex] = parameterList[parameterIndex];
 
 				}
 
@@ -252,7 +359,7 @@ namespace ResizeItSimple
 			{
 
 				// Check if node exists and if it has been assigned value
-				if ((configNode != null) && !string.IsNullOrEmpty(configNode.InnerText))
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
 					_compositingQuality = (CompositingQuality)Enum.Parse(typeof(CompositingQuality), configNode.InnerText);
 
 			}
@@ -265,7 +372,7 @@ namespace ResizeItSimple
 			{
 
 				// Check if node exists and if it has been assigned value
-				if ((configNode != null) && !string.IsNullOrEmpty(configNode.InnerText))
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
 					_interpolationMode = (InterpolationMode)Enum.Parse(typeof(InterpolationMode), configNode.InnerText);
 
 			}
@@ -278,7 +385,7 @@ namespace ResizeItSimple
 			{
 
 				// Check if node exists and if it has been assigned value
-				if ((configNode != null) && !string.IsNullOrEmpty(configNode.InnerText))
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
 					_pixelOffsetMode = (PixelOffsetMode)Enum.Parse(typeof(PixelOffsetMode), configNode.InnerText);
 
 			}
@@ -291,7 +398,7 @@ namespace ResizeItSimple
 			{
 
 				// Check if node exists and if it has been assigned value
-				if ((configNode != null) && !string.IsNullOrEmpty(configNode.InnerText))
+				if ((configNode != null) && !string.IsNullOrWhiteSpace(configNode.InnerText))
 					_smoothingMode = (SmoothingMode)Enum.Parse(typeof(SmoothingMode), configNode.InnerText);
 
 			}
@@ -340,6 +447,11 @@ namespace ResizeItSimple
 		}
 
 		/// <summary>
+		/// Gets an array of supported file extensions.
+		/// </summary>
+		public string[] SupportedExtensions => SupportedFileExtensions.ToArray();
+
+		/// <summary>
 		/// Gets a boolean indicating whether to keep the source aspect ratio.
 		/// </summary>
 		public bool KeepAspectRatio => _keepAspectRatio;
@@ -360,6 +472,22 @@ namespace ResizeItSimple
 		public int FixedHeight => _fixedHeight;
 
 		/// <summary>
+		/// Gets the output folder name.
+		/// </summary>
+		public string OutputFolderName => _outputFolderName;
+
+		/// <summary>
+		/// Gets the output file name suffix.
+		/// </summary>
+		public string OutputFileSuffix => _outputFileSuffix;
+
+		/// <summary>
+		/// Gets a boolean indicating whether the output should be skipped if the output file already exists.
+		/// </summary>
+		/// <remarks>Setting this to false will instruct the program to overwrite an existing file.</remarks>
+		public bool SkipIfOutputAlreadyExists => _skipIfOutputAlreadyExists;
+
+		/// <summary>
 		/// Gets a boolean indicating whether to copy metadata from source.
 		/// </summary>
 		public bool CopyMetadata => _copyMetadata;
@@ -378,6 +506,12 @@ namespace ResizeItSimple
 		/// Gets the configured image codec.
 		/// </summary>
 		public ImageCodecInfo ImageCodec => _imageCodecInfo;
+
+		/// <summary>
+		/// Gets the output extension defined by the codec.
+		/// </summary>
+		/// <remarks>If no codec is configured, this property returns an empty string.</remarks>
+		public string OutputExtension => _outputExtension;
 
 		/// <summary>
 		/// Gets the configured encoder parameters.

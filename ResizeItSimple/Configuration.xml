@@ -1,8 +1,39 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Configuration>
 
+	<!--
+	
+	Specifies the resizing parameters.
+	
+		KeepAspectRatio: True to maintain the original file aspect ratio, and uses the Ratio parameter to resize (width and height).
+		Ratio: A decimal value that is multiplied by the original image width and height, resulting on the final image size.
+		FixedWidth: Used when KeepAspectRatio is False, fixes the resulting image width.
+		FixedHeight: Used when KeepAspectRatio is False, fixes the resulting image height.
+		
+	-->
 	<Resize KeepAspectRatio="True" Ratio="0.25" FixedWidth="1024" FixedHeight="768" />
 
+	<!-- 
+	
+	The name of the folder that will be created where the images are.
+	If this is empty, the resized files will be placed on the same folder than the original file.
+	
+	WARNING: Be mindful of special characters on folder/file names that are not allowed by the operating system.
+	
+	-->
+	<OutputFolderName>Resized</OutputFolderName>
+
+	<!--
+	
+	The output file suffix.
+	WARNING: Be mindful of special characters on folder/file names that are not allowed by the operating system.
+	
+	-->
+	<OutputFileSuffix> (Resized)</OutputFileSuffix>
+
+	<!-- True if output generation should be skipped if output file already exists. False will overwrite existing output file. -->
+	<SkipIfOutputAlreadyExists>False</SkipIfOutputAlreadyExists>
+	
 	<!-- True if metadata should be copied from source to target. False otherwise. -->
 	<CopyMetadata>True</CopyMetadata>
 
@@ -10,12 +41,20 @@
 	<RecursiveDirectorySearch>False</RecursiveDirectorySearch>
 	
 	<ImageCodec MimeType="image/jpeg">
+		<ChrominanceTable />
 		<ColorDepth>24</ColorDepth>
+		<Compression />
+		<LuminanceTable />
 		<Quality>95</Quality>
+		<RenderMethod />
+		<SaveFlag />
+		<ScanMethod />
+		<Transformation />
+		<Version />
 	</ImageCodec>
 
 	<!-- Sets the maximum number of concurrent tasks. Can be -1 or any positive number.	-->
-	<MaxDegreeOfParallelism>-1</MaxDegreeOfParallelism>
+	<MaxDegreeOfParallelism>4</MaxDegreeOfParallelism>
 	
 	<!--
 	

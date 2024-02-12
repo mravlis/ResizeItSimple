@@ -43,8 +43,17 @@ namespace ResizeItSimple
 				if (args == null)
 					return 0;
 
+				// Get current executable path
+				string executablePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+
+				// Get current directory
+				string executableDirectory = Path.GetDirectoryName(executablePath);
+
+				// Get configuration file path
+				string configurationFilePath = Path.Combine(executableDirectory, ConfigurationFileName);
+
 				// Reads configuration from the default configuration file name.
-				_configuration = new Configuration(ConfigurationFileName);
+				_configuration = new Configuration(configurationFilePath);
 
 				// Gets the configured, supported file extensions.
 				_supportedExtensions = new List<string>(_configuration.SupportedExtensions);
@@ -67,6 +76,9 @@ namespace ResizeItSimple
 						// Creates new directory info from the specified argument
 						DirectoryInfo dirInfo = new DirectoryInfo(argument);
 
+						// Log
+						Log($"Enumerating: {dirInfo.FullName}...");
+
 						// Defines whether to perform recursive search or not
 						SearchOption searchOption = _configuration.RecursiveDirectorySearch ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
@@ -76,6 +88,9 @@ namespace ResizeItSimple
 					}
 
 				}
+
+				// Log
+				Log($"Processing {fileList.Count} files...");
 
 				// Set parallel processing options
 				ParallelOptions parallelOptions = new ParallelOptions
@@ -90,8 +105,11 @@ namespace ResizeItSimple
 				return 0;
 
 			}
-			catch
+			catch (Exception ex)
 			{
+
+				// Log exception
+				Log(ex.ToString());
 
 				// We got an error, return negative 0xFFFFFF to diferentiate from normal execution.
 				return -1;
@@ -198,6 +216,9 @@ namespace ResizeItSimple
 				if (!IsFileSupported(sourceImageFile))
 					return;
 
+				// Log
+				Log($"Processing file {sourceImagePath}");
+
 				// Opens the source image
 				sourceImage = new Bitmap(sourceImagePath);
 
@@ -263,6 +284,15 @@ namespace ResizeItSimple
 
 			}
 
+		}
+
+		/// <summary>
+		/// Logs a message to the console screen.
+		/// </summary>
+		/// <param name="message">The message to be logged.</param>
+		private static void Log(string message)
+		{
+			Console.WriteLine($"[{DateTime.Now:G}] {message}");
 		}
 
 	}

@@ -57,7 +57,7 @@ namespace ResizeItSimple
 		/// <summary>
 		/// The output file name pattern.
 		/// </summary>
-		private readonly string _outputFileSuffix = @"{0} (Resized)";
+		private readonly string _outputFileSuffix = @" (Resized)";
 
 		/// <summary>
 		/// Boolean indicating whether the output should be skipped if output file already exists.
